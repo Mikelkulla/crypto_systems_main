@@ -1,0 +1,12 @@
+# Ignore virtual environment
+venv/
+
+# Ignore compiled Python files
+__pycache__/
+
+# Ignore credentials and secrets
+crypto-systems-main-credentials.json
+secret.py
+
+# Ignore CSV or other sensitive data files (optional)
+# resources/*.csv
