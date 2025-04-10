@@ -218,7 +218,7 @@ def import_calculated_beta_to_google_sheet(
             benchmark="BTC",
             days=days
         )
-        time.sleep(3)                                                       # This is a temporary handle for the error 429 to may requests from the Sheets API
+                                                             # This is a temporary handle for the error 429 to may requests from the Sheets API
                                                                             # probably this comes from BTC price being fetched on every iteration of the for loop get_beta
         # Append result if beta was calculated successfully
         if beta is not None:
