@@ -20,3 +20,5 @@ The logic in calculate_beta_scores.py file should be added in a main script that
 After making this changes i need to push to git to refresh the codes there
 Check ToDo sheet in RSPS LV3 spreadsheet for todos extra.
 
+# 11/04/2025
+Why does the direction in the indicaotr is in revers? -1 for uptrend and 1 for downtrend

@@ -103,9 +103,9 @@ def get_coin_historical_prices_from_google_sheets(spreadsheet_name,  credentials
         
         # Open the spreadsheet
         spreadsheet = client.open(spreadsheet_name)
-    except gspread.exceptions.APIError as e:
-        print(f"API Error: {e} - Check if Drive/Sheets API is enabled and credentials are valid.")
-        return pd.DataFrame()
+    # except gspread.exceptions.APIError as e:
+    #     print(f"API Error: {e} - Check if Drive/Sheets API is enabled and credentials are valid.")
+    #     return pd.DataFrame()
     except gspread.exceptions.SpreadsheetNotFound:
         print(f"Spreadsheet '{spreadsheet_name}' not found!")
         return pd.DataFrame()
