@@ -34,6 +34,6 @@ Left at step 5 from grok.com
 
 
 # Docker Contaier on Google Cloud Run
-URL: https://crypto-systems-main-335747774758.europe-west1.run.app/calculate-beta-tokenusdt
+URL: 
 Used this chat to deploy to google Artifact Registry and to Google Cloud Run:
     - https://chatgpt.com/share/67fd809a-62e8-8003-a954-1b95a0fc1cf6
