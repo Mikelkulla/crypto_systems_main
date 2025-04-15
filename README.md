@@ -37,3 +37,7 @@ Left at step 5 from grok.com
 URL: 
 Used this chat to deploy to google Artifact Registry and to Google Cloud Run:
     - https://chatgpt.com/share/67fd809a-62e8-8003-a954-1b95a0fc1cf6
+
+
+Command to deploy Docker Container from Artifact Registry:
+    - gcloud run deploy crypto-systems-main   --image europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest   --platform managed   --region europe-west1   --allow-unauthenticated 
