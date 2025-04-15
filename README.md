@@ -43,17 +43,17 @@ Used this chat to deploy to google Artifact Registry and to Google Cloud Run:
     - docker push europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest
 
 # Recommended Command with Adjustments
-## To maximize success and address potential issues, here’s an enhanced version of your command:
-gcloud run deploy crypto-systems-main \
-  --image europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest \
-  --platform managed \
-  --region europe-west1 \
-  --port 8080 \
-  --timeout 600 \
-  --memory 1Gi \
-  --cpu 1 \
-  --allow-unauthenticated \
-  --service-account your-service-account@crypto-systems-main.iam.gserviceaccount.com
+#### To maximize success and address potential issues, here’s an enhanced version of your command:
+    gcloud run deploy crypto-systems-main \
+    --image europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest \
+    --platform managed \
+    --region europe-west1 \
+    --port 8080 \
+    --timeout 600 \
+    --memory 1Gi \
+    --cpu 1 \
+    --allow-unauthenticated \
+    --service-account your-service-account@crypto-systems-main.iam.gserviceaccount.com
 ### Changes Made:
     --port 8080: Explicitly sets the port to match your Flask app.
     --timeout 600: Allows 10 minutes for main_beta(), covering the 183.9-second requests.
