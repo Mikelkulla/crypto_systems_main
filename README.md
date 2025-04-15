@@ -54,7 +54,7 @@ Used this chat to deploy to google Artifact Registry and to Google Cloud Run:
     --cpu 1 \
     --allow-unauthenticated \
     --service-account your-service-account@crypto-systems-main.iam.gserviceaccount.com
-### Changes Made:
+### Changes Made (Explained):
     --port 8080: Explicitly sets the port to match your Flask app.
     --timeout 600: Allows 10 minutes for main_beta(), covering the 183.9-second requests.
     --memory 1Gi: Provides ample memory for data processing.
