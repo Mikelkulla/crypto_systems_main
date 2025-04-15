@@ -38,6 +38,28 @@ URL:
 Used this chat to deploy to google Artifact Registry and to Google Cloud Run:
     - https://chatgpt.com/share/67fd809a-62e8-8003-a954-1b95a0fc1cf6
 
+# Rebuild and push:
+    - docker build -t europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest .
+    - docker push europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest
 
-Command to deploy Docker Container from Artifact Registry:
+# Recommended Command with Adjustments
+## To maximize success and address potential issues, here’s an enhanced version of your command:
+gcloud run deploy crypto-systems-main \
+  --image europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest \
+  --platform managed \
+  --region europe-west1 \
+  --port 8080 \
+  --timeout 600 \
+  --memory 1Gi \
+  --cpu 1 \
+  --allow-unauthenticated \
+  --service-account your-service-account@crypto-systems-main.iam.gserviceaccount.com
+### Changes Made:
+    --port 8080: Explicitly sets the port to match your Flask app.
+    --timeout 600: Allows 10 minutes for main_beta(), covering the 183.9-second requests.
+    --memory 1Gi: Provides ample memory for data processing.
+    --cpu 1: Keeps the default CPU but can be increased to 2 if needed.
+    --service-account: Placeholder for your Google Sheets service account (replace with the correct email or omit if using the default and it has permissions).
+
+## Command to deploy Docker Container from Artifact Registry:
     - gcloud run deploy crypto-systems-main   --image europe-west1-docker.pkg.dev/crypto-systems-main/systems-docker-repo/crypto-systems-main:latest   --platform managed   --region europe-west1   --allow-unauthenticated 
