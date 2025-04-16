@@ -8,7 +8,10 @@ import indicators_functions as ind_func
 from datetime import datetime
 import numpy as np
 import pandas as pd
+from logging_config import setup_logger
 
+logger = setup_logger(__name__)
+    
 credentials_file = conf.GOOGLE_PROJECT_CREDENTIALS
 # History prices spreadsheet info
 history_prices_daily_spreadsheet_name = conf.SPREADSHEET_HISTORICAL_PRICES_DAILY_NAME
@@ -44,19 +47,19 @@ def get_prices(history_prices_daily_spreadsheet_name, credentials_file, coin_lis
             except gspread.exceptions.APIError as e:
                 if e.response.status_code == 429:
                     delay = 6 ** attempt  # Exponential backoff: 1s, 2s, 4s, 8s, 16s
-                    print(f"429 Too Many Requests for {coin_binance_name} (attempt {attempt + 1}/{retries}): {e}. Retrying in {delay} seconds...")
+                    logger.warning(f"429 Too Many Requests for {coin_binance_name} (attempt {attempt + 1}/{retries}): {e}. Retrying in {delay} seconds...")
                     time.sleep(delay)
                 else:
-                    print(f"Non-429 API error for {coin_binance_name}: {e}")
+                    logger.error(f"Non-429 API error for {coin_binance_name}: {e}")
                     skipped_coins.append(coin_binance_name)
                     break
 
             except Exception as e:
-                print(f"Unexpected error for {coin_binance_name}: {e}")
+                logger.error(f"Unexpected error for {coin_binance_name}: {e}")
                 skipped_coins.append(coin_binance_name)
                 break
             if attempt == retries - 1:
-                print(f"Max retries ({retries}) reached for {coin_binance_name}. Skipping.")
+                logger.warning(f"Max retries ({retries}) reached for {coin_binance_name}. Skipping.")
                 skipped_coins.append(coin_binance_name)
                 break
     return tokens_prices_list, skipped_coins    
@@ -88,9 +91,9 @@ def main_beta():
     # Fetching crypto coins list
     try:
         coin_list = gsh_get.get_coin_list_from_google_sheet(systems_spreadsheet_name,credentials_file,systems_coins_list_sheet_name)
-        print(f"Fetched {len(coin_list)} coins from '{systems_spreadsheet_name}' sheet '{systems_coins_list_sheet_name}'")
+        logger.info(f"Fetched {len(coin_list)} coins from '{systems_spreadsheet_name}' sheet '{systems_coins_list_sheet_name}'")
     except Exception as e:
-        print(f"Error fetching coin list: {str(e)}")
+        logger.error(f"Error fetching coin list: {str(e)}")
         return
     benchmark_beta_name = 'BTC'
     benchmark_trend_name = 'BTC'
@@ -105,7 +108,7 @@ def main_beta():
     # Fetching Tokens prices
     tokens_prices_list, skipped_coins = get_prices(history_prices_daily_spreadsheet_name, credentials_file, coin_list)
     if skipped_coins:
-        print(f"Skipped coins due to errors: {skipped_coins}")
+        logger.warning(f"Skipped coins due to errors: {skipped_coins}")
     print(tokens_prices_list)
 
 
@@ -114,12 +117,14 @@ def main_beta():
     header_row = ["Updated", current_time]
     
     # Calculate beta for each token and append to a list of [Token name, [df, beta score]]
+    logger.info("Calculating beta scores...")
     beta_scores_list = []
     for token_name, token_df in tokens_prices_list:
         df, calculated_beta = cbs.get_beta(benchmark_df,token_df, benchmark_beta_name, token_name, beta_days)
         beta_scores_list.append([token_name, calculated_beta])
 
     # Prepend the header row
+    logger.info("Writing beta scores to Google Sheets...")
     beta_scores_list.insert(0, header_row)
     gsh_write.write_to_google_sheet(
         systems_spreadsheet_name, 
@@ -130,9 +135,10 @@ def main_beta():
         )
     
     # Calculate trend indicators for TOKEN/USDT and TOKEN/BTC
+    logger.info("Calculating trend indicators for TOKEN/USDT and TOKEN/BTC...")
     token_trend_scores_list = []
     for token_name, token_df in tokens_prices_list:
-        print(f'Calculating trends for {token_name}')
+        logger.info(f'Calculating trends for {token_name}')
         
         # TOKEN/USDT trend (fdi_adaptive_supertrend)
         usdt_scores = ind_func.fdi_adaptive_supertrend(token_df)
@@ -159,6 +165,8 @@ def main_beta():
     print(token_trend_scores_list)
     # Prepend the header row
     token_trend_scores_list.insert(0, header_row)
+    logger.info("Writing trend scores to Google Sheets...")
+
     gsh_write.write_to_google_sheet(
         systems_spreadsheet_name,
         credentials_file,
