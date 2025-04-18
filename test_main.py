@@ -68,8 +68,6 @@ def get_prices(history_prices_daily_spreadsheet_name, credentials_file, coin_lis
 def main_beta():
     """
     Main function to calculate beta scores without overwellming the API Sheets
-    - Needs to implement logic for 429 error as i received it again. Retry after some time
-    - Needs to implement write to google sheet as it just calculates but doesn't write
     - The main plan is to also calcuate beta agains TOTAL too, and pass all the beta scores to the RSPS LV3 sheet Symbol, BTC Beta, TOTAL Beta
     """
     credentials_file = conf.GOOGLE_PROJECT_CREDENTIALS
@@ -139,7 +137,7 @@ def main_beta():
     token_trend_scores_list = []
     for token_name, token_df in tokens_prices_list:
         logger.info(f'Calculating trends for {token_name}')
-        
+
         # TOKEN/USDT trend (fdi_adaptive_supertrend)
         usdt_scores = ind_func.fdi_adaptive_supertrend(token_df)
         usdt_last_score = usdt_scores['direction'][-1] if len(usdt_scores['direction']) > 0 else None
