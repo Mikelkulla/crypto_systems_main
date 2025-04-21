@@ -81,9 +81,9 @@ def main_beta():
     systems_coins_list_sheet_name = 'Coins'
     systems_beta_targetsheet_name = '5.1 - Beta'
     systems_token_usdt_sheet_name = '5 - Trash Selection Table'
-    systems_token_usdt_range_name = 'B10:D37'
-    systems_beta_targetrange_name_BTC = 'B4:C31'            # Leave C without number to calculate the length based on the coins beta fetched
-    systems_beta_targetrange_name_TOTAL = 'B4:D31'          # Leave D without number to calculate the length based on the coins beta fetched
+    systems_token_usdt_range_name = 'B10:E'
+    systems_beta_targetrange_name_BTC = 'B4:C'            # Leave C without number to calculate the length based on the coins beta fetched
+    systems_beta_targetrange_name_TOTAL = 'B4:D'          # Leave D without number to calculate the length based on the coins beta fetched
     beta_days = 600                                         # Time that beta will be calculated
 
     # Fetching crypto coins list
@@ -95,6 +95,7 @@ def main_beta():
         return
     benchmark_beta_name = 'BTC'
     benchmark_trend_name = 'BTC'
+    benchmark_trend_name_2 = 'SOL'
     if benchmark_beta_name == benchmark_trend_name:
         # Fetch Benchmark price history 
         benchmark_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_beta_name)
@@ -102,6 +103,8 @@ def main_beta():
     else:
         benchmark_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_beta_name)
         benchmark_trend_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_trend_name)
+    
+    benchmark_trend_df_2 = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_trend_name_2)
     
     # Fetching Tokens prices
     tokens_prices_list, skipped_coins = get_prices(history_prices_daily_spreadsheet_name, credentials_file, coin_list)
@@ -146,10 +149,10 @@ def main_beta():
         # Merge token_df and benchmark_df on Date
         btc_df = pd.DataFrame({
             'Date': token_df['Date'],
-            'Open': token_df['Open'] / benchmark_df['Open'],
-            'High': token_df['High'] / benchmark_df['High'],
-            'Low': token_df['Low'] / benchmark_df['Low'],
-            'Close': token_df['Close'] / benchmark_df['Close'],
+            'Open': token_df['Open'] / benchmark_trend_df['Open'],
+            'High': token_df['High'] / benchmark_trend_df['High'],
+            'Low': token_df['Low'] / benchmark_trend_df['Low'],
+            'Close': token_df['Close'] / benchmark_trend_df['Close'],
             'Volume (USDT)': token_df['Volume (USDT)']  # Keep token's volume
         }).dropna()
 
@@ -157,8 +160,23 @@ def main_beta():
         btc_scores = ind_func.liquidity_weighted_supertrend(btc_df)
         btc_last_score = btc_scores['direction'][-1] if len(btc_scores['direction']) > 0 else None
 
+        # TOKEN/SOL price series
+        # Merge token_df and benchmark_df on Date
+        token_sol_df = pd.DataFrame({
+            'Date': token_df['Date'],
+            'Open': token_df['Open'] / benchmark_trend_df_2['Open'],
+            'High': token_df['High'] / benchmark_trend_df_2['High'],
+            'Low': token_df['Low'] / benchmark_trend_df_2['Low'],
+            'Close': token_df['Close'] / benchmark_trend_df_2['Close'],
+            'Volume (USDT)': token_df['Volume (USDT)']  # Keep token's volume
+        }).dropna()
+
+        # TOKEN/BTC trend (liquidity_weighted_supertrend)
+        token_sol_scores = ind_func.liquidity_weighted_supertrend(token_sol_df)
+        token_sol_last_score = token_sol_scores['direction'][-1] if len(token_sol_scores['direction']) > 0 else None
+
         # Append [token_name, usdt_score, btc_score]
-        token_trend_scores_list.append([token_name, to_native_type(usdt_last_score), to_native_type(btc_last_score)])
+        token_trend_scores_list.append([token_name, to_native_type(usdt_last_score), to_native_type(btc_last_score),to_native_type(token_sol_last_score)])
 
     print(token_trend_scores_list)
     # Prepend the header row
