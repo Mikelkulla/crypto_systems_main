@@ -190,7 +190,7 @@ def main_beta():
         systems_token_usdt_sheet_name,
         systems_token_usdt_range_name
     )
-    
+    return token_trend_scores_list
 
 if __name__ == "__main__":
     main_beta()

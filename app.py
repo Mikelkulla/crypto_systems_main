@@ -21,9 +21,11 @@ atexit.register(log_exit)
 def run_beta_endpoint():
     try:
         logger.info("Starting beta and trends calculation")
-        main_beta()
+        token_trend_scores_list = main_beta()
         logger.info("Beta and trends calculation completed")
-        return jsonify({"status": "success", "message": "Beta scores calculated and written to Google Sheets. Trend for TOKEN/USDT Calculated and writen to Google Sheets"}), 200
+        return jsonify({"status": "success", 
+                        "message": "Beta scores calculated and written to Google Sheets. Trend for TOKEN/USDT Calculated and writen to Google Sheets",
+                        "Results": token_trend_scores_list}), 200
     except Exception as e:
         logger.error(f"Error during beta calculation: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
