@@ -60,7 +60,7 @@ def test_liquidity_weighted_supertrend(history_prices_daily_spreadsheet_name, cr
     if is_token_against_benchmark:
         # Load data for 'RENDER' coin
         toke_df = gsh_get.get_coin_historical_prices_from_google_sheets(
-            history_prices_daily_spreadsheet_name, credentials_file, 'CRV'
+            history_prices_daily_spreadsheet_name, credentials_file, 'SIGMA'
         )
         print('==================================')
         benchmark_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, 'BTC')
