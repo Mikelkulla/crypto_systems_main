@@ -128,6 +128,95 @@ def test_liquidity_weighted_supertrend(history_prices_daily_spreadsheet_name, cr
     # Plot the results
     plot_liquidity_weighted_supertrend(df, result)
 
+def test_liquidity_weighted_supertrend_PAIRS(history_prices_daily_spreadsheet_name, credentials_file):
+    """
+    Test the Liquidity Weighted Supertrend indicator with Google Sheets data.
+    """
+    is_token_against_benchmark = True   # Toggle this True for TOKEN/BTC trend or False for TOKEN/USD trend
+    if is_token_against_benchmark:
+        # Load data for 'RENDER' coin
+        toke_df = gsh_get.get_coin_historical_prices_from_google_sheets(
+            history_prices_daily_spreadsheet_name, credentials_file, 'VIRTUAL'
+        )
+        print('==================================')
+        benchmark_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, 'SOL')
+        print('==================================')
+        print("toke_df shape:", toke_df.shape)
+        print("benchmark_df shape:", benchmark_df.shape)
+
+        # Merge DataFrames on Date using an inner join
+        merged_df = pd.merge(toke_df, benchmark_df, on='Date', how='inner', suffixes=('_token', '_sol'))
+        print(merged_df)
+        # Calculate token/SOL price series
+        df = pd.DataFrame({
+            'Date': merged_df['Date'],
+            'Open': merged_df['Open_token'] / merged_df['Open_sol'],
+            'High': merged_df['High_token'] / merged_df['High_sol'],
+            'Low': merged_df['Low_token'] / merged_df['Low_sol'],
+            'Close': merged_df['Close_token'] / merged_df['Close_sol'],
+            'Volume (USDT)': merged_df['Volume (USDT)_token']
+        })
+
+        # Check for missing values
+        print("Missing values in df:\n", df.isna().sum())
+
+        # Drop rows with missing values if necessary
+        df = df.dropna()
+
+        print(df)
+        print('+++++++++++++++++++++++++++++++')
+    else:
+        # Load data for 'RENDER' coin
+        df = gsh_get.get_coin_historical_prices_from_google_sheets(
+            history_prices_daily_spreadsheet_name, credentials_file, 'SOL'
+        )
+        print('==================================')
+        print(df)
+    # Ensure dates are in datetime format and sorted
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.sort_values('Date').reset_index(drop=True)
+    
+    # Run indicator with default parameters
+    result = liquidity_weighted_supertrend(
+        df,
+        factor=2.5,
+        period=75,
+        fast_ma_length=46,
+        slow_ma_length=65,
+        supertrend_type="Smoothed"
+    )
+    
+    # Find the index around March 2025 to analyze direction changes
+    target_date = pd.to_datetime('2025-03-09')
+    target_date_end = pd.to_datetime('2025-03-11')
+    mask = (result['date'] >= target_date) & (result['date'] <= target_date_end)
+    indices = np.where(mask)[0]
+    
+    # Print data around the specified dates
+    print("\nData around March 9-10, 2025:")
+    for idx in indices:
+        print(f"Date: {result['date'][idx]}, Close: {df['Close'].iloc[idx]}, "
+              f"High: {df['High'].iloc[idx]}, Low: {df['Low'].iloc[idx]}, "
+              f"Supertrend: {result['supertrend'][idx]:.2f}, Direction: {result['direction'][idx]}")
+    
+    # Print direction changes around March 2025
+    print("\nDirection Changes around March 2025:")
+    for i in range(max(0, indices[0] - 5), min(len(result['date']), indices[-1] + 5)):
+        if i > 0 and result['direction'][i] != result['direction'][i-1]:
+            print(f"Direction change at {result['date'][i]}: {result['direction'][i-1]} -> {result['direction'][i]}")
+    
+    # Print last 110 days
+    print_days = -110
+    print("\nLast 110 Days:")
+    print("Dates:", result['date'][print_days:])
+    print("Supertrend:", result['supertrend'][print_days:])
+    print("Direction:", result['direction'][print_days:])
+    print("Long Signals:", result['go_long'][print_days:])
+    print("Short Signals:", result['go_short'][print_days:])
+    
+    # Plot the results
+    plot_liquidity_weighted_supertrend(df, result)
+
 # Test with Google Sheets data
 if __name__ == "__main__":
     credentials_file = conf.GOOGLE_PROJECT_CREDENTIALS
@@ -143,4 +232,4 @@ if __name__ == "__main__":
     beta_days = 600
 
     # test_fdi_adaptive_supertrend(history_prices_daily_spreadsheet_name, credentials_file)
-    test_liquidity_weighted_supertrend(history_prices_daily_spreadsheet_name, credentials_file)
+    test_liquidity_weighted_supertrend_PAIRS(history_prices_daily_spreadsheet_name, credentials_file)

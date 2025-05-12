@@ -104,10 +104,12 @@ def main_beta():
     else:
         benchmark_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_beta_name)
         benchmark_trend_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_trend_name)
-    
+        benchmark_trend_df['Date'] = pd.to_datetime(benchmark_trend_df['Date'], errors='coerce')
+
     benchmark_trend_df_2 = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_trend_name_2)
+    benchmark_trend_df_2['Date'] = pd.to_datetime(benchmark_trend_df_2['Date'], errors='coerce')
     benchmark_trend_df_3 = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_trend_name_3)
-    
+    benchmark_trend_df_3['Date'] = pd.to_datetime(benchmark_trend_df_3['Date'], errors='coerce')
     # Fetching Tokens prices
     tokens_prices_list, skipped_coins = get_prices(history_prices_daily_spreadsheet_name, credentials_file, coin_list)
     if skipped_coins:
@@ -142,7 +144,10 @@ def main_beta():
     token_trend_scores_list = []
     for token_name, token_df in tokens_prices_list:
         logger.info(f'Calculating trends for {token_name}')
-
+        print("token_df['Date'] dtype:", token_df['Date'].dtype)
+        print("benchmark_trend_df['Date'] dtype:", benchmark_trend_df['Date'].dtype)
+        print("benchmark_trend_df_2['Date'] dtype:", benchmark_trend_df_2['Date'].dtype)
+        print("benchmark_trend_df_3['Date'] dtype:", benchmark_trend_df_3['Date'].dtype)
         # TOKEN/USDT trend (fdi_adaptive_supertrend)
         usdt_scores = ind_func.fdi_adaptive_supertrend(token_df)
         usdt_last_score = usdt_scores['direction'][-1] if len(usdt_scores['direction']) > 0 else None
@@ -150,15 +155,22 @@ def main_beta():
         # =======================================================================================
         
         # TOKEN/BTC price series
-        # Merge token_df and benchmark_df on Date
+        # Merge token_df and benchmark_trend_df on Date
+        btc_merged_df = pd.merge(
+            token_df, benchmark_trend_df, on='Date', how='inner', suffixes=('_token', '_btc')
+        )
         btc_df = pd.DataFrame({
-            'Date': token_df['Date'],
-            'Open': token_df['Open'] / benchmark_trend_df['Open'],
-            'High': token_df['High'] / benchmark_trend_df['High'],
-            'Low': token_df['Low'] / benchmark_trend_df['Low'],
-            'Close': token_df['Close'] / benchmark_trend_df['Close'],
-            'Volume (USDT)': token_df['Volume (USDT)']  # Keep token's volume
-        }).dropna()
+            'Date': btc_merged_df['Date'],
+            'Open': btc_merged_df['Open_token'] / btc_merged_df['Open_btc'],
+            'High': btc_merged_df['High_token'] / btc_merged_df['High_btc'],
+            'Low': btc_merged_df['Low_token'] / btc_merged_df['Low_btc'],
+            'Close': btc_merged_df['Close_token'] / btc_merged_df['Close_btc'],
+            'Volume (USDT)': btc_merged_df['Volume (USDT)_token']
+        })
+
+        # Check for missing values
+        print("Missing values in btc_df:\n", btc_df.isna().sum())
+        btc_df = btc_df.dropna()
 
         # TOKEN/BTC trend (liquidity_weighted_supertrend)
         btc_scores = ind_func.liquidity_weighted_supertrend(btc_df)
@@ -167,30 +179,44 @@ def main_beta():
         # =======================================================================================
 
         # TOKEN/SOL price series
-        # Merge token_df and benchmark_df on Date
+        # Merge token_df and benchmark_trend_df_2 on Date
+        sol_merged_df = pd.merge(
+            token_df, benchmark_trend_df_2, on='Date', how='inner', suffixes=('_token', '_sol')
+        )
         token_sol_df = pd.DataFrame({
-            'Date': token_df['Date'],
-            'Open': token_df['Open'] / benchmark_trend_df_2['Open'],
-            'High': token_df['High'] / benchmark_trend_df_2['High'],
-            'Low': token_df['Low'] / benchmark_trend_df_2['Low'],
-            'Close': token_df['Close'] / benchmark_trend_df_2['Close'],
-            'Volume (USDT)': token_df['Volume (USDT)']  # Keep token's volume
-        }).dropna()
+            'Date': sol_merged_df['Date'],
+            'Open': sol_merged_df['Open_token'] / sol_merged_df['Open_sol'],
+            'High': sol_merged_df['High_token'] / sol_merged_df['High_sol'],
+            'Low': sol_merged_df['Low_token'] / sol_merged_df['Low_sol'],
+            'Close': sol_merged_df['Close_token'] / sol_merged_df['Close_sol'],
+            'Volume (USDT)': sol_merged_df['Volume (USDT)_token']
+        })
+
+        # Check for missing values
+        print("Missing values in token_sol_df:\n", token_sol_df.isna().sum())
+        token_sol_df = token_sol_df.dropna()
 
         # TOKEN/SOL trend (liquidity_weighted_supertrend)
         token_sol_scores = ind_func.liquidity_weighted_supertrend(token_sol_df)
         token_sol_last_score = token_sol_scores['direction'][-1] if len(token_sol_scores['direction']) > 0 else None
 
         # TOKEN/SUI price series
-        # Merge token_df and benchmark_df on Date
+        # Merge token_df and benchmark_trend_df_3 on Date
+        sui_merged_df = pd.merge(
+            token_df, benchmark_trend_df_3, on='Date', how='inner', suffixes=('_token', '_sui')
+        )
         token_sui_df = pd.DataFrame({
-            'Date': token_df['Date'],
-            'Open': token_df['Open'] / benchmark_trend_df_3['Open'],
-            'High': token_df['High'] / benchmark_trend_df_3['High'],
-            'Low': token_df['Low'] / benchmark_trend_df_3['Low'],
-            'Close': token_df['Close'] / benchmark_trend_df_3['Close'],
-            'Volume (USDT)': token_df['Volume (USDT)']  # Keep token's volume
-        }).dropna()
+            'Date': sui_merged_df['Date'],
+            'Open': sui_merged_df['Open_token'] / sui_merged_df['Open_sui'],
+            'High': sui_merged_df['High_token'] / sui_merged_df['High_sui'],
+            'Low': sui_merged_df['Low_token'] / sui_merged_df['Low_sui'],
+            'Close': sui_merged_df['Close_token'] / sui_merged_df['Close_sui'],
+            'Volume (USDT)': sui_merged_df['Volume (USDT)_token']
+        })
+
+        # Check for missing values
+        print("Missing values in token_sui_df:\n", token_sui_df.isna().sum())
+        token_sui_df = token_sui_df.dropna()
 
         # TOKEN/SUI trend (liquidity_weighted_supertrend)
         token_sui_scores = ind_func.liquidity_weighted_supertrend(token_sui_df)
