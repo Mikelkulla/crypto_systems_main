@@ -8,7 +8,7 @@ import numpy as np
 
 def test_fdi_adaptive_supertrend(history_prices_daily_spreadsheet_name, credentials_file):
 
-    df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name, credentials_file, 'BTC')
+    df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name, credentials_file, 'SIGMA')
     print('==================================')
     print(df['Date'])
     # Ensure dates are in datetime format and sorted
@@ -233,3 +233,4 @@ if __name__ == "__main__":
 
     # test_fdi_adaptive_supertrend(history_prices_daily_spreadsheet_name, credentials_file)
     test_liquidity_weighted_supertrend_PAIRS(history_prices_daily_spreadsheet_name, credentials_file)
+    test_fdi_adaptive_supertrend(history_prices_daily_spreadsheet_name, credentials_file)

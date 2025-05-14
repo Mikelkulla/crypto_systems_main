@@ -81,7 +81,7 @@ def main_beta():
     systems_coins_list_sheet_name = 'Coins'
     systems_beta_targetsheet_name = '5.1 - Beta'
     systems_token_usdt_sheet_name = '5 - Trash Selection Table'
-    systems_token_usdt_range_name = 'B10:F'
+    systems_token_usdt_range_name = 'B10:G'
     systems_beta_targetrange_name_BTC = 'B4:C'            # Leave C without number to calculate the length based on the coins beta fetched
     systems_beta_targetrange_name_TOTAL = 'B4:D'          # Leave D without number to calculate the length based on the coins beta fetched
     beta_days = 600                                         # Time that beta will be calculated
@@ -97,6 +97,7 @@ def main_beta():
     benchmark_trend_name = 'BTC'
     benchmark_trend_name_2 = 'SOL'
     benchmark_trend_name_3 = 'SUI'
+    benchmark_trend_name_4 = 'ETH'
     if benchmark_beta_name == benchmark_trend_name:
         # Fetch Benchmark price history 
         benchmark_df = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_beta_name)
@@ -110,6 +111,8 @@ def main_beta():
     benchmark_trend_df_2['Date'] = pd.to_datetime(benchmark_trend_df_2['Date'], errors='coerce')
     benchmark_trend_df_3 = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_trend_name_3)
     benchmark_trend_df_3['Date'] = pd.to_datetime(benchmark_trend_df_3['Date'], errors='coerce')
+    benchmark_trend_df_4 = gsh_get.get_coin_historical_prices_from_google_sheets(history_prices_daily_spreadsheet_name,credentials_file, benchmark_trend_name_4)
+    benchmark_trend_df_4['Date'] = pd.to_datetime(benchmark_trend_df_4['Date'], errors='coerce')
     # Fetching Tokens prices
     tokens_prices_list, skipped_coins = get_prices(history_prices_daily_spreadsheet_name, credentials_file, coin_list)
     if skipped_coins:
@@ -144,10 +147,7 @@ def main_beta():
     token_trend_scores_list = []
     for token_name, token_df in tokens_prices_list:
         logger.info(f'Calculating trends for {token_name}')
-        print("token_df['Date'] dtype:", token_df['Date'].dtype)
-        print("benchmark_trend_df['Date'] dtype:", benchmark_trend_df['Date'].dtype)
-        print("benchmark_trend_df_2['Date'] dtype:", benchmark_trend_df_2['Date'].dtype)
-        print("benchmark_trend_df_3['Date'] dtype:", benchmark_trend_df_3['Date'].dtype)
+
         # TOKEN/USDT trend (fdi_adaptive_supertrend)
         usdt_scores = ind_func.fdi_adaptive_supertrend(token_df)
         usdt_last_score = usdt_scores['direction'][-1] if len(usdt_scores['direction']) > 0 else None
@@ -169,7 +169,7 @@ def main_beta():
         })
 
         # Check for missing values
-        print("Missing values in btc_df:\n", btc_df.isna().sum())
+        # print("Missing values in btc_df:\n", btc_df.isna().sum())
         btc_df = btc_df.dropna()
 
         # TOKEN/BTC trend (liquidity_weighted_supertrend)
@@ -193,12 +193,14 @@ def main_beta():
         })
 
         # Check for missing values
-        print("Missing values in token_sol_df:\n", token_sol_df.isna().sum())
+        # print("Missing values in token_sol_df:\n", token_sol_df.isna().sum())
         token_sol_df = token_sol_df.dropna()
 
         # TOKEN/SOL trend (liquidity_weighted_supertrend)
         token_sol_scores = ind_func.liquidity_weighted_supertrend(token_sol_df)
         token_sol_last_score = token_sol_scores['direction'][-1] if len(token_sol_scores['direction']) > 0 else None
+
+        # =======================================================================================
 
         # TOKEN/SUI price series
         # Merge token_df and benchmark_trend_df_3 on Date
@@ -215,15 +217,39 @@ def main_beta():
         })
 
         # Check for missing values
-        print("Missing values in token_sui_df:\n", token_sui_df.isna().sum())
+        # print("Missing values in token_sui_df:\n", token_sui_df.isna().sum())
         token_sui_df = token_sui_df.dropna()
 
         # TOKEN/SUI trend (liquidity_weighted_supertrend)
         token_sui_scores = ind_func.liquidity_weighted_supertrend(token_sui_df)
         token_sui_last_score = token_sui_scores['direction'][-1] if len(token_sui_scores['direction']) > 0 else None
 
-        # Append [token_name, usdt_score, btc_score, sui_score]
-        token_trend_scores_list.append([token_name, to_native_type(usdt_last_score), to_native_type(btc_last_score),to_native_type(token_sol_last_score),to_native_type(token_sui_last_score)])
+        # =======================================================================================
+
+        # TOKEN/ETH price series
+        # Merge token_df and benchmark_trend_df_4 on Date
+        eth_merged_df = pd.merge(
+            token_df, benchmark_trend_df_4, on='Date', how='inner', suffixes=('_token', '_eth')
+        )
+        token_eth_df = pd.DataFrame({
+            'Date': eth_merged_df['Date'],
+            'Open': eth_merged_df['Open_token'] / eth_merged_df['Open_eth'],
+            'High': eth_merged_df['High_token'] / eth_merged_df['High_eth'],
+            'Low': eth_merged_df['Low_token'] / eth_merged_df['Low_eth'],
+            'Close': eth_merged_df['Close_token'] / eth_merged_df['Close_eth'],
+            'Volume (USDT)': eth_merged_df['Volume (USDT)_token']
+        })
+
+        # Check for missing values
+        # print("Missing values in token_eth_df:\n", token_eth_df.isna().sum())
+        token_eth_df = token_eth_df.dropna()
+
+        # TOKEN/ETH trend (liquidity_weighted_supertrend)
+        token_eth_scores = ind_func.fdi_adaptive_supertrend(token_eth_df)
+        token_eth_last_score = token_eth_scores['direction'][-1] if len(token_eth_scores['direction']) > 0 else None
+
+        # Append [token_name, usdt_score, btc_score, sol_score, sui_score, eth_score,]
+        token_trend_scores_list.append([token_name, to_native_type(usdt_last_score), to_native_type(btc_last_score), to_native_type(token_sol_last_score), to_native_type(token_sui_last_score), to_native_type(token_eth_last_score)])
 
 
     print(token_trend_scores_list)
