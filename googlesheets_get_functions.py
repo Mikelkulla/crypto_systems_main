@@ -3,7 +3,10 @@ import pandas as pd
 import gspread  # Library to interact with Google Sheets
 from oauth2client.service_account import ServiceAccountCredentials  # Handles authentication with Google APIs
 from typing import List, Tuple
+from logging_config import setup_logger
 
+logger = setup_logger(__name__)
+  
 def get_coin_list_from_google_sheet(
     spreadsheet_name: str, 
     credentials_file: str, 
@@ -152,3 +155,32 @@ def get_coin_historical_prices_from_google_sheets(spreadsheet_name,  credentials
     print(f"Successfully retrieved {len(df)} price entries for {coin}")
     return df
 
+def get_range_from_google_sheet(spreadsheet_name, credentials_file, sheet_name, range_name):
+    """Fetch a specific range from a Google Sheet."""
+    try:
+        # Set up credentials
+        scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+        creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_file, scope)
+        client = gspread.authorize(creds)
+        
+        # Open the spreadsheet and select the sheet
+        sheet = client.open(spreadsheet_name).worksheet(sheet_name)
+        
+        # Get the specified range
+        range_data = sheet.get(range_name)
+        
+        logger.info(f"Successfully fetched range {range_name} from {sheet_name} in {spreadsheet_name}")
+        return range_data  # Returns a list of lists (rows x columns)
+    
+    except gspread.exceptions.APIError as e:
+        logger.error(f"API error fetching range {range_name}: {str(e)}")
+        raise
+    except gspread.exceptions.SpreadsheetNotFound as e:
+        logger.error(f"Spreadsheet {spreadsheet_name} not found: {str(e)}")
+        raise
+    except gspread.exceptions.WorksheetNotFound as e:
+        logger.error(f"Sheet {sheet_name} not found in {spreadsheet_name}: {str(e)}")
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error fetching range {range_name}: {str(e)}")
+        raise
