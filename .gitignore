@@ -9,5 +9,6 @@ crypto-systems-main-credentials.json
 config.py
 app_log.log
 Error.DateShouldBeConvertedToDateTime_FIXED_app_log.log
+deploy_new_container.sh
 # Ignore CSV or other sensitive data files (optional)
 # resources/*.csv
