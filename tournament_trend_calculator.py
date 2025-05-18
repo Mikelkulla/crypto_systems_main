@@ -88,6 +88,16 @@ def calculate_pairwise_trends(token_list):
 
 def write_matrix_to_google_sheets(matrix, tokens, spreadsheet_name, sheet_name, range_name):
     """Write the tournament matrix to Google Sheets starting at B1, ensuring numeric formatting."""
+    # Initialize gspread client
+    scope = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name(credentials_file, scope)
+    client = gspread.authorize(creds)
+    sheet = client.open(spreadsheet_name).worksheet(sheet_name)
+    
+    # Clear the range B1:R18 before writing
+    logger.info(f"Clearing range B1:R18 in {sheet_name}...")
+    sheet.batch_clear(["B1:R18"])
+    
     # Prepare data with tokens as header and matrix rows
     data = [tokens]  # Header row
     data.extend(matrix)  # Matrix rows (keep 0 and 1 as integers)
@@ -112,11 +122,8 @@ def write_matrix_to_google_sheets(matrix, tokens, spreadsheet_name, sheet_name, 
     sheet.update_cells(cell_list)
     logger.info(f"Applied numeric formatting to {data_range} in {sheet_name}.")
 
-def main():
+def main(spreadsheet_name ='RSPS LV3', sheet_name ='Tournament Matrix', token_range= 'A2:A'):
     """Main function to run the tournament trend calculation."""
-    spreadsheet_name = 'RSPS LV3'
-    sheet_name = 'Tournament Matrix'
-    token_range = 'A2:A'  # Range to fetch token names
 
     try:
         # Fetch token list from A1:A
@@ -135,7 +142,7 @@ def main():
 
         # Write matrix to Google Sheets
         write_matrix_to_google_sheets(matrix, tokens, spreadsheet_name, sheet_name, output_range)
-
+        return "Successfully calculated Shitcoins Tournament"
     except Exception as e:
         logger.error(f"Error in tournament trend calculation: {str(e)}")
         raise

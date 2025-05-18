@@ -255,10 +255,10 @@ def plot_fdi_adaptive_supertrend(df, result):
 def liquidity_weighted_supertrend(
     df,
     factor=2.5,
-    period=75,
-    fast_ma_length=46,
+    period=69,
+    fast_ma_length=24,
     slow_ma_length=65,
-    supertrend_type="Smoothed"
+    supertrend_type="Aggressive"
 ):
     """
     Calculate Liquidity Weighted Supertrend indicator.

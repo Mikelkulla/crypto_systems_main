@@ -132,7 +132,7 @@ def test_liquidity_weighted_supertrend_PAIRS(history_prices_daily_spreadsheet_na
     """
     Test the Liquidity Weighted Supertrend indicator with Google Sheets data.
     """
-    is_token_against_benchmark = True   # Toggle this True for TOKEN/BTC trend or False for TOKEN/USD trend
+    is_token_against_benchmark = False   # Toggle this True for TOKEN/BTC trend or False for TOKEN/USD trend
     if is_token_against_benchmark:
         # Load data for 'RENDER' coin
         toke_df = gsh_get.get_coin_historical_prices_from_google_sheets(
@@ -179,11 +179,7 @@ def test_liquidity_weighted_supertrend_PAIRS(history_prices_daily_spreadsheet_na
     # Run indicator with default parameters
     result = liquidity_weighted_supertrend(
         df,
-        factor=2.5,
-        period=75,
-        fast_ma_length=46,
-        slow_ma_length=65,
-        supertrend_type="Smoothed"
+        
     )
     
     # Find the index around March 2025 to analyze direction changes

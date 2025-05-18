@@ -3,7 +3,7 @@ from test_main import main_beta, calculate_beta, calculate_trend_usdt, calculate
 from logging_config import setup_logger
 from waitress import serve  # ✅ New import
 import atexit
-
+from tournament_trend_calculator import main as shitcoin_tournament
 logger = setup_logger(__name__)
 
 # Log that the Flask app is starting
@@ -131,6 +131,20 @@ def run_trend_eth_endpoint():
         logger.error(f"Error during TOKEN/ETH trend calculation: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/calculate_shitcoins_tournament', methods=['GET', 'POST'])
+def run_tournament_shitcoins_endpoint():
+    try:
+        logger.info("Starting Shitcoins Tournament")
+        response = shitcoin_tournament()
+        logger.info("Shitcoins Tournament calculation completed")
+        return jsonify({
+            "status": "success",
+            "message": response,
+        }), 200
+    except Exception as e:
+        logger.error(f"Error during TOKEN/ETH trend calculation: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 if __name__ == "__main__":
     logger.info("Flask app running on http://127.0.0.1:8080")
     logger.info("Endpoints:")
@@ -141,6 +155,7 @@ if __name__ == "__main__":
     logger.info("http://127.0.0.1:8080/calculate-trend-sui")
     logger.info("http://127.0.0.1:8080/calculate-trend-eth")
     logger.info("http://127.0.0.1:8080/calculate-full-system")
+    logger.info("http://127.0.0.1:8080/calculate_shitcoins_tournament")
     
     
     serve(app, host="0.0.0.0", port=8080)
