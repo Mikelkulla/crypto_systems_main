@@ -6,6 +6,7 @@ import pandas as pd
 from logging_config import setup_logger
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
 
 logger = setup_logger(__name__)
 
@@ -24,20 +25,36 @@ def get_token_list(spreadsheet_name, sheet_name, range_name):
         logger.error(f"Error fetching token list from {sheet_name} range {range_name}: {str(e)}")
         raise
 
+# Define retry decorator for fetching token data
+@retry(
+    stop=stop_after_attempt(12),
+    wait=wait_fixed(5),
+    retry=retry_if_exception_type(Exception),
+    before_sleep=lambda retry_state: logger.info(
+        f"Retrying {retry_state.fn.__name__} for {retry_state.attempt_number}/12 after {str(retry_state.outcome.exception())}"
+    )
+)
+def fetch_token_data(token, spreadsheet_name, credentials_file):
+    df = gsh_get.get_coin_historical_prices_from_google_sheets(
+        spreadsheet_name, credentials_file, token
+    )
+    df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
+    df = df.dropna(subset=['Date'])
+    return df
+
 def calculate_pairwise_trends(token_list):
     """Calculate trends for each pair of tokens and build a tournament matrix."""
     # Fetch historical prices for all tokens
     token_dfs = {}
     for token in token_list:
         try:
-            df = gsh_get.get_coin_historical_prices_from_google_sheets(
-                history_prices_daily_spreadsheet_name, credentials_file, token
+            token_dfs[token] = fetch_token_data(
+                token, 
+                history_prices_daily_spreadsheet_name, 
+                credentials_file
             )
-            df['Date'] = pd.to_datetime(df['Date'], errors='coerce')
-            df = df.dropna(subset=['Date'])
-            token_dfs[token] = df
         except Exception as e:
-            logger.warning(f"Failed to fetch data for {token}: {str(e)}")
+            logger.warning(f"All retries failed for {token}: {str(e)}")
             token_dfs[token] = None
 
     # Initialize n x n matrix for n tokens
@@ -138,8 +155,8 @@ def main(spreadsheet_name ='RSPS LV3', sheet_name ='Tournament Matrix', token_ra
         n = len(tokens)
         end_column = chr(ord('B') + n - 1)  # B + (n-1) for columns (e.g., B to I for 8 tokens)
         end_row = n + 1  # 1 for header + n rows
-        output_range = f"B1:{end_column}{end_row}"  # e.g., B1:I9 for 8 tokens (including header)
-
+        # output_range = f"B1:{end_column}{end_row}"  # e.g., B1:I9 for 8 tokens (including header)
+        output_range = "B1:CM43"
         # Write matrix to Google Sheets
         write_matrix_to_google_sheets(matrix, tokens, spreadsheet_name, sheet_name, output_range)
         return "Successfully calculated Shitcoins Tournament"
