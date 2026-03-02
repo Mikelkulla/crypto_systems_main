@@ -146,16 +146,16 @@ def run_tournament_shitcoins_endpoint():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-    logger.info("Flask app running on http://127.0.0.1:8080")
+    logger.info("Flask app running on http://127.0.0.1:8081")
     logger.info("Endpoints:")
-    logger.info("http://127.0.0.1:8080/calculate-beta")
-    logger.info("http://127.0.0.1:8080/calculate-trend-usdt")
-    logger.info("http://127.0.0.1:8080/calculate-trend-btc")
-    logger.info("http://127.0.0.1:8080/calculate-trend-sol")
-    logger.info("http://127.0.0.1:8080/calculate-trend-sui")
-    logger.info("http://127.0.0.1:8080/calculate-trend-eth")
-    logger.info("http://127.0.0.1:8080/calculate-full-system")
-    logger.info("http://127.0.0.1:8080/calculate_shitcoins_tournament")
+    logger.info("http://127.0.0.1:8081/calculate-beta")
+    logger.info("http://127.0.0.1:8081/calculate-trend-usdt")
+    logger.info("http://127.0.0.1:8081/calculate-trend-btc")
+    logger.info("http://127.0.0.1:8081/calculate-trend-sol")
+    logger.info("http://127.0.0.1:8081/calculate-trend-sui")
+    logger.info("http://127.0.0.1:8081/calculate-trend-eth")
+    logger.info("http://127.0.0.1:8081/calculate-full-system")
+    logger.info("http://127.0.0.1:8081/calculate_shitcoins_tournament")
     
     
-    serve(app, host="0.0.0.0", port=8080)
+    serve(app, host="0.0.0.0", port=8081)
